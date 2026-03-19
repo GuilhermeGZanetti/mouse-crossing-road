@@ -4,16 +4,16 @@ const ctx = canvas.getContext('2d');
 // ---- CONFIG ----
 const CANVAS_W = 320;
 const CANVAS_H = 240;
-const SCALE = Math.min(
+let scale = Math.max(1, Math.min(
   Math.floor(window.innerWidth / CANVAS_W),
   Math.floor(window.innerHeight / CANVAS_H),
   4
-);
+));
 
 canvas.width = CANVAS_W;
 canvas.height = CANVAS_H;
-canvas.style.width = (CANVAS_W * SCALE) + 'px';
-canvas.style.height = (CANVAS_H * SCALE) + 'px';
+canvas.style.width = (CANVAS_W * scale) + 'px';
+canvas.style.height = (CANVAS_H * scale) + 'px';
 
 // ---- PASTEL PALETTE ----
 const P = {
@@ -132,8 +132,8 @@ let mouseX = -100, mouseY = -100, mouseIn = false;
 
 canvas.addEventListener('mousemove', (e) => {
   const r = canvas.getBoundingClientRect();
-  mouseX = (e.clientX - r.left) / SCALE;
-  mouseY = (e.clientY - r.top) / SCALE;
+  mouseX = (e.clientX - r.left) / scale;
+  mouseY = (e.clientY - r.top) / scale;
   mouseIn = true;
 });
 canvas.addEventListener('mouseleave', () => { mouseIn = false; mouseX = mouseY = -100; });
@@ -417,11 +417,11 @@ requestAnimationFrame(gameLoop);
 
 // ---- RESIZE HANDLER ----
 window.addEventListener('resize', () => {
-  const s = Math.min(
+  scale = Math.max(1, Math.min(
     Math.floor(window.innerWidth / CANVAS_W),
     Math.floor(window.innerHeight / CANVAS_H),
     4
-  );
-  canvas.style.width = (CANVAS_W * s) + 'px';
-  canvas.style.height = (CANVAS_H * s) + 'px';
+  ));
+  canvas.style.width = (CANVAS_W * scale) + 'px';
+  canvas.style.height = (CANVAS_H * scale) + 'px';
 });
