@@ -110,6 +110,7 @@ function spawnVehicle(lane, spreadX) {
     x, y: vy, w, h, sprite,
     speed: lane.speed * (0.8 + Math.random() * 0.4),
     direction: lane.direction, brakeLights: false,
+    stopAnim: 0,
   };
 }
 
@@ -327,6 +328,9 @@ function drawPixelText(text, cx, y, centered) {
 }
 
 // ---- UPDATE ----
+const STOP_DISTANCE = 30;
+const BRAKE_DISTANCE = 50;
+
 function update() {
   if (mouseIn) curLane = laneAt(mouseY);
   else curLane = -1;
@@ -338,17 +342,42 @@ function update() {
 
   for (let i = 0; i < lanes.length; i++) {
     const lane = lanes[i];
-    const shouldStop = (i === curLane) && mouseIn;
-    lane.stopped = shouldStop;
-
-    if (lane.stopped) lane.stopAnim = Math.min(1, lane.stopAnim + 0.06);
-    else lane.stopAnim = Math.max(0, lane.stopAnim - 0.04);
-
-    const mult = 1 - lane.stopAnim;
+    const isMouseLane = (i === curLane) && mouseIn;
 
     for (const v of lane.vehicles) {
+      let shouldStop = false;
+
+      if (isMouseLane) {
+        if (v.direction === 1) {
+          // Moving right: stop if front hasn't passed the mouse yet
+          const front = v.x + v.w;
+          const dist = mouseX - front;
+          if (dist > 0 && dist < BRAKE_DISTANCE) {
+            shouldStop = true;
+          } else if (dist >= BRAKE_DISTANCE || front > mouseX) {
+            shouldStop = false;
+          }
+        } else {
+          // Moving left: stop if front hasn't passed the mouse yet
+          const front = v.x;
+          const dist = front - mouseX;
+          if (dist > 0 && dist < BRAKE_DISTANCE) {
+            shouldStop = true;
+          } else if (dist >= BRAKE_DISTANCE || front + v.w < mouseX) {
+            shouldStop = false;
+          }
+        }
+      }
+
+      if (shouldStop) {
+        v.stopAnim = Math.min(1, v.stopAnim + 0.08);
+      } else {
+        v.stopAnim = Math.max(0, v.stopAnim - 0.04);
+      }
+
+      const mult = 1 - v.stopAnim;
       v.x += v.speed * v.direction * mult;
-      v.brakeLights = lane.stopAnim > 0.3;
+      v.brakeLights = v.stopAnim > 0.3;
 
       if (v.direction === 1 && v.x > CANVAS_W + 15) v.x = -v.w - Math.random() * 40;
       else if (v.direction === -1 && v.x < -v.w - 15) v.x = CANVAS_W + Math.random() * 40;
@@ -371,15 +400,14 @@ function draw() {
     ctx.fillRect(0, lane.y, CANVAS_W, lane.height);
   }
 
-  // Stop indicators
-  for (const lane of lanes) {
-    if (lane.stopAnim > 0.5 && mouseIn) {
-      ctx.fillStyle = P.softRed;
-      ctx.fillRect(1, lane.y + 3, 3, 3);
-      ctx.fillRect(CANVAS_W - 4, lane.y + 3, 3, 3);
+  // Pedestrian crossing indicator at mouse position
+  if (curLane !== -1 && mouseIn) {
+    const lane = lanes[curLane];
+    const mx = Math.floor(mouseX);
+    // Draw a small crosswalk stripe at mouse x
+    for (let sy = lane.y + 1; sy < lane.y + lane.height - 1; sy += 2) {
       ctx.fillStyle = P.white;
-      ctx.fillRect(2, lane.y + 4, 1, 1);
-      ctx.fillRect(CANVAS_W - 3, lane.y + 4, 1, 1);
+      ctx.fillRect(mx - 1, sy, 3, 1);
     }
   }
 
