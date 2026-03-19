@@ -86,7 +86,7 @@ for (let i = 0; i < LANE_COUNT; i++) {
   lanes.push({
     y: yOff, height: ROAD_H,
     direction: dir, speed: spd,
-    vehicles: [], stopped: false, stopAnim: 0,
+    vehicles: [],
   });
   yOff += ROAD_H;
   if ((i + 1) % 2 === 0 && i < LANE_COUNT - 1) yOff += GAP_H;
@@ -328,7 +328,6 @@ function drawPixelText(text, cx, y, centered) {
 }
 
 // ---- UPDATE ----
-const STOP_DISTANCE = 30;
 const BRAKE_DISTANCE = 50;
 
 function update() {
